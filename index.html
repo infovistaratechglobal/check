@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CipherCast - Secret One-Way Broadcast</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+</head>
+<body>
+    <div class="background-decorations">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+    </div>
+
+    <header class="hidden">
+        <div class="logo">
+            <i class="fa-solid fa-user-secret logo-icon"></i>
+            <span>CipherCast</span>
+        </div>
+        <div class="nav-controls">
+            <button id="btn-toggle-view" class="btn btn-secondary">
+                <i class="fa-solid fa-lock"></i> <span id="toggle-view-text">Admin Panel</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Visitor View -->
+        <section id="view-visitor" class="card active">
+            
+            <div class="card-body">
+                <div id="setup-missing-message" class="alert-info hidden">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p>No broadcast is active. Switch to the Admin Panel to set up your first secret broadcast.</p>
+                </div>
+
+                <div id="visitor-form-container">
+                    <div class="question-box">
+                        <label>Security Question:</label>
+                        <div id="visitor-question" class="question-text">Loading question...</div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="visitor-answer">Your Answer</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-key input-icon"></i>
+                            <input type="text" id="visitor-answer" placeholder="Enter answer here..." autocomplete="off">
+                        </div>
+                    </div>
+
+                    <button id="btn-decrypt" class="btn btn-primary btn-block">
+                        <i class="fa-solid fa-paper-plane"></i> Submit
+                    </button>
+                </div>
+
+                <!-- Decrypted Message Section (Hidden initially) -->
+                <div id="decrypted-message-box" class="decrypted-box hidden">
+                    <div class="lock-status success-glow">
+                        <i class="fa-solid fa-envelope-open"></i>
+                    </div>
+                    <h3>Decrypted Broadcast</h3>
+                    <p id="decrypted-text" class="message-content"></p>
+                    
+                    <div id="location-sharing-status" class="status-indicator">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <span>Registering visitor presence...</span>
+                    </div>
+                </div>
+
+                <div id="visitor-error" class="error-text hidden"></div>
+            </div>
+        </section>
+
+        <!-- Admin Login View -->
+        <section id="view-admin-login" class="card">
+            <div class="card-header">
+                <h2>Admin Authentication</h2>
+                <p class="subtitle">Enter your admin password to access the panel.</p>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <label for="admin-login-password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="password" id="admin-login-password" placeholder="Enter Admin Password...">
+                    </div>
+                </div>
+                <button id="btn-admin-auth" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Login
+                </button>
+                <div id="admin-login-error" class="error-text hidden"></div>
+            </div>
+        </section>
+
+        <!-- Admin Panel View -->
+        <section id="view-admin-panel" class="card wide-card">
+            <div class="card-header admin-panel-header">
+                <div>
+                    <h2>Admin Control Center</h2>
+                    <p class="subtitle">Configure broadcasts and monitor visitor telemetry.</p>
+                </div>
+                <button id="btn-admin-logout" class="btn btn-danger btn-sm">
+                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="tab-btn active" data-tab="tab-broadcast">
+                    <i class="fa-solid fa-paper-plane"></i> Broadcast Setup
+                </button>
+                <button class="tab-btn" data-tab="tab-logs">
+                    <i class="fa-solid fa-users"></i> Visitor Telemetry (<span id="visitor-count">0</span>)
+                </button>
+                <button class="tab-btn" data-tab="tab-database">
+                    <i class="fa-solid fa-database"></i> Connection Settings
+                </button>
+            </div>
+
+            <div class="card-body">
+                <!-- Tab: Broadcast Setup -->
+                <div id="tab-broadcast" class="tab-content active">
+                    <form id="broadcast-setup-form" onsubmit="return false;">
+                        <div class="grid-2">
+                            <div class="input-group">
+                                <label for="setup-question">Security Question</label>
+                                <input type="text" id="setup-question" placeholder="e.g. What is the color of the sky?" required>
+                            </div>
+                            <div class="input-group">
+                                <label for="setup-answer">Answer (Decryption Key)</label>
+                                <input type="password" id="setup-answer" placeholder="Answers are case-insensitive" required>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="setup-message">Secret Message to Broadcast</label>
+                            <textarea id="setup-message" rows="4" placeholder="Enter your secret message here..." required></textarea>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="setup-admin-password">Change Admin Password (Optional)</label>
+                            <input type="password" id="setup-admin-password" placeholder="Leave blank to keep current password">
+                        </div>
+
+                        <button id="btn-save-broadcast" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Deploy Broadcast
+                        </button>
+                        <div id="broadcast-status-msg" class="success-text hidden"></div>
+                    </form>
+                </div>
+
+                <!-- Tab: Visitor Telemetry Logs -->
+                <div id="tab-logs" class="tab-content">
+                    <div class="logs-container">
+                        <div id="map-container" class="map-wrapper">
+                            <div id="map"></div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Status</th>
+                                        <th>IP & ISP</th>
+                                        <th>Location Details</th>
+                                        <th>Coordinates</th>
+                                        <th>Answer Attempt</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logs-list">
+                                    <!-- Dynamic rows -->
+                                    <tr>
+                                        <td colspan="6" class="text-center font-muted">No telemetry received yet.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Database Settings -->
+                <div id="tab-database" class="tab-content">
+                    <div class="db-settings-info">
+                        <p>By default, CipherCast uses your browser's <strong>Local Storage</strong>. To broadcast to remote users, enter your client-side <strong>Firebase Realtime Database</strong> configuration below.</p>
+                    </div>
+
+                    <div class="input-group checkbox-group">
+                        <input type="checkbox" id="db-use-firebase">
+                        <label for="db-use-firebase">Enable Firebase Realtime Database Integration</label>
+                    </div>
+
+                    <div id="firebase-config-fields" class="hidden">
+                        <div class="grid-2">
+                            <div class="input-group">
+                                <label for="fb-api-key">API Key</label>
+                                <input type="password" id="fb-api-key" placeholder="AIzaSy...">
+                            </div>
+                            <div class="input-group">
+                                <label for="fb-db-url">Database URL</label>
+                                <input type="text" id="fb-db-url" placeholder="https://your-project.firebaseio.com">
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="input-group">
+                                <label for="fb-project-id">Project ID</label>
+                                <input type="text" id="fb-project-id" placeholder="your-project-id">
+                            </div>
+                            <div class="input-group">
+                                <label for="fb-app-id">App ID</label>
+                                <input type="text" id="fb-app-id" placeholder="1:12345:web:abcd...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btn-save-db" class="btn btn-secondary">
+                        <i class="fa-solid fa-circle-check"></i> Save Connection Settings
+                    </button>
+                    <div id="db-status-msg" class="success-text hidden"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
+    <!-- Leaflet JS for Maps -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Application Scripts -->
+    <script src="crypto.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
