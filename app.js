@@ -2,15 +2,15 @@
 
 let dbRef = null;
 let currentConfig = {
-    useFirebase: false,
+    useFirebase: true,
     firebase: {
-        apiKey: "",
-        authDomain: "",
-        databaseURL: "",
-        projectId: "",
-        storageBucket: "",
-        messagingSenderId: "",
-        appId: ""
+        apiKey: "AIzaSyCtVJSDh16CfSS9OpIqGx_YmZIG6U3tfQM",
+        authDomain: "check-da612.firebaseapp.com",
+        databaseURL: "https://check-da612-default-rtdb.firebaseio.com",
+        projectId: "check-da612",
+        storageBucket: "check-da612.firebasestorage.app",
+        messagingSenderId: "133055481236",
+        appId: "1:133055481236:web:160afb9a8a1c63bd07fb81"
     }
 };
 
@@ -57,7 +57,11 @@ function loadSettings() {
     const saved = localStorage.getItem('cc_db_config');
     if (saved) {
         try {
-            currentConfig = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            // Only override default settings if the saved config is valid and has an active API key
+            if (parsed && parsed.firebase && parsed.firebase.apiKey) {
+                currentConfig = parsed;
+            }
         } catch (e) {
             console.error("Error parsing settings", e);
         }
