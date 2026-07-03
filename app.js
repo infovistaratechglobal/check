@@ -6,7 +6,7 @@ let currentConfig = {
     firebase: {
         apiKey: "AIzaSyCtVJSDh16CfSS9OpIqGx_YmZIG6U3tfQM",
         authDomain: "check-da612.firebaseapp.com",
-        databaseURL: "https://check-da612-default-rtdb.firebaseio.com",
+        databaseURL: "https://check-da612-default-rtdb.firebaseio.com/",
         projectId: "check-da612",
         storageBucket: "check-da612.firebasestorage.app",
         messagingSenderId: "133055481236",
